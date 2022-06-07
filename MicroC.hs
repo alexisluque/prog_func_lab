@@ -28,7 +28,7 @@ main = do args <- getArgs
                                    either putStr (process opts) (compile prg)
            (_,   _,    errs) -> ioError (userError (concat errs ++
                                                     usageInfo header options))
-     where header = "Usage: MicroPascal [OPTIONS] file"  
+     where header = "Usage: MicroC [OPTIONS] file"
 
 compile prg = do  ast  <- parser prg
                   ast' <- case checkProgram ast of

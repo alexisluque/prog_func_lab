@@ -60,6 +60,8 @@ data Expr
     | Unary    UOp Expr
     | Binary   BOp Expr Expr
     | Assign   Name Expr
+    | Chr Expr
+    | Ord Expr
     deriving (Eq,Show)
 
 data UOp = Not | Neg
@@ -140,12 +142,18 @@ table =
   , [Infix (m_reservedOp  "||" >> return (Binary Or)) AssocLeft]
   , [Infix (m_reservedOp  "==" >> return (Binary Equ)) AssocLeft]
   , [Infix (m_reservedOp  "<"  >> return (Binary Less)) AssocLeft]
-  , [Prefix (try $ m_identifier <* m_reservedOp "=" >>= return . Assign)]
   ]
 
 term =  do m_reserved "getchar"
            m_parens spaces
            return (GetChar)
+    <|> try (Assign <$> m_identifier <* m_reservedOp "=" <*> exprparser)
+    <|> do m_reserved "chr"
+           e <- m_parens exprparser
+           return (Chr e)
+    <|> do m_reserved "ord"
+           e <- m_parens exprparser
+           return (Ord e)
     <|> m_parens exprparser
     <|> Var <$> m_identifier 
     <|> (do char '\''
