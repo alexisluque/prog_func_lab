@@ -22,10 +22,13 @@ type Env = [(Name, Type)]
 checkProgram :: Program -> [Error]
 checkProgram (Program mainBody) = checkProg mainBody []
 
+-- CHECKEO DE NOMBRES
+-- ------------------
+
 -- MainBody ([CompoundStmt (Com | Decl)])
 checkProg :: MainBody -> Env -> [Error]
 checkProg []                 env = []
-checkProg ((Com stmt):xs)    env = checkStmt stmt env
+checkProg ((Com stmt):xs)    env = checkStmt stmt env ++ checkProg xs env
 checkProg ((Decl varDef):xs) env = checkVarDef varDef env ++ checkProg xs (varDefToEnv varDef:env)
 
 -- VarDef Type Nane
