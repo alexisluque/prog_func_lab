@@ -8,7 +8,7 @@ import Syntax
 
 -- Implementar
 optimize :: Program -> Program
-optimize (Program body) = Program (foldProg body)
+optimize (Program body) = Program ((deadCodeElim . foldProg) body)
 
 -- CONSTANT FOLDING
 -- ----------------
@@ -46,8 +46,44 @@ constFold e1 e2 bOp | isNeutro e1 bOp                          = e2
                     | isNat e1 && isNat e2 && isAritmetico bOp = NatLit (operacion e1 e2 bOp)
                     | otherwise                                = Binary bOp e1 e2
 
+-- DEAD CODE ELIMINATION
+-- ---------------------
+
+deadCodeElim :: MainBody -> MainBody
+deadCodeElim []                      = []
+deadCodeElim (d@(Decl _):statements) = d:deadCodeElim statements
+-- Dead code elimination de statements del MainBody
+deadCodeElim ((Com stmt):statements) = codeElimStmt stmt ++ deadCodeElim statements
+
+codeElimStmt :: Stmt -> [CompoundStmt]
+codeElimStmt stmt@(StmtExpr e)                          = [Com stmt]
+codeElimStmt put@(PutChar e)                            = [Com put]
+-- Dead code elimination If
+codeElimStmt (If e b1 b2) | isNat e && isTrue e         = map Com (codeElimBody b1)
+                          | isNat e && (not . isTrue) e = map Com (codeElimBody b2)
+                          | otherwise                   = [Com (If e (codeElimBody b1) (codeElimBody b2))]
+-- Dead code elimination While
+codeElimStmt (While e b) | isNat e && (not . isTrue) e  = []
+                         | otherwise                    = [Com (While e (codeElimBody b))]
+
+codeElimBody :: Body -> Body
+codeElimBody = concatMap codeElimBodyStmt
+
+codeElimBodyStmt :: Stmt -> [Stmt]
+codeElimBodyStmt stmt@(StmtExpr e)                          = [stmt]
+codeElimBodyStmt put@(PutChar e)                            = [put]
+codeElimBodyStmt (If e b1 b2) | isNat e && isTrue e         = codeElimBody b1
+                              | isNat e && (not . isTrue) e = codeElimBody b2
+                              | otherwise                   = [If e (codeElimBody b1) (codeElimBody b2)]
+codeElimBodyStmt (While e b) | isNat e && (not . isTrue) e  = []
+                             | otherwise                    = [While e (codeElimBody b)]
+
 -- UTILS
 -- -----
+
+isTrue :: Expr -> Bool
+isTrue (NatLit n) = n > 0
+isTrue _          = error "isTrue: La expresión no es de tipo NatLit."
 
 isNeutro :: Expr -> BOp -> Bool
 isNeutro (NatLit int) Plus = int == 0
@@ -86,6 +122,9 @@ isAritmetico op = case op of
                     Div   -> True
                     Mod   -> True
                     _     -> False
+
+getMainBody :: Program -> MainBody
+getMainBody (Program body) = body
 
 -- Función auxiliar para usar en el REPL
 getProgram :: Either a b -> b
