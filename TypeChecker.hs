@@ -124,3 +124,4 @@ getVarType name env = snd $ head $ filter (\(n,ty) -> n == name) env
 -- Función auxiliar para usar en el REPL
 getProgram :: Either a b -> b
 getProgram (Right p) = p
+getProgram _         = error "getProgram: Error de sintáxis."
