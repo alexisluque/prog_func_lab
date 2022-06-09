@@ -130,6 +130,7 @@ exprparser :: Parser Expr
 exprparser = buildExpressionParser table term <?> "expression"
 table =
   [ [Prefix (m_reservedOp "~"  >> return (Unary Not))]
+  , [Prefix (m_reservedOp "!"  >> return (Unary Not))]
   , [Prefix (m_reservedOp "-"  >> return (Unary Neg))]
   , [Infix (m_reservedOp  "&&" >> return (Binary And)) AssocLeft]
   , [Infix (m_reservedOp  "*"  >> return (Binary Mult)) AssocLeft]
@@ -148,9 +149,11 @@ term =  do m_reserved "getchar"
     <|> try (Assign <$> m_identifier <* m_reservedOp "=" <*> exprparser)
     <|> m_parens exprparser
     <|> Var <$> m_identifier 
-    <|> (do char '\''
+    <|> (do m_whiteSpace
+            char '\''
             c <- alphaNum
             char '\''
+            m_whiteSpace
             return $ CharLit c)
     <|> fmap NatLit m_natural
 
@@ -163,10 +166,9 @@ def = emptyDef{ commentStart = "(*"
               , opStart = oneOf "-<*+=%:aondm."
               , opLetter = oneOf "-<*+=%:andortivm."
               , reservedOpNames = [ "-", "<", "*", "+", "==", "="
-                                  , "&&", "||", "~","/","%", ";"]
+                                  , "&&", "||", "~","/","%", ";", "!"]
               , reservedNames = ["true", "false"
                                 , "int", "char"
-                                , "()"
                                 , "if", "else"
                                 , "while"
                                 , "putchar", "getchar"]
