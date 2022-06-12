@@ -1,0 +1,2 @@
+Program [Decl (VarDef int "x"),Com (StmtExpr (Assign "x" (NatLit 0))),Com (StmtExpr (Assign "x" (NatLit 1))),Com (If (Var "x") [PutChar (CharLit 'a'),StmtExpr (Assign "x" (NatLit 0))] [PutChar (CharLit 'b'),StmtExpr (Assign "x" (NatLit 1))]),Com (If (Var "x") [PutChar (CharLit 'a')] [PutChar (CharLit 'b')])]
+ab

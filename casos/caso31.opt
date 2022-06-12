@@ -1,0 +1,1 @@
+Program [Decl (VarDef int "x"),Decl (VarDef int "y"),Com (StmtExpr (Assign "x" (Assign "y" (NatLit 1)))),Com (StmtExpr (Assign "x" (Var "y"))),Com (StmtExpr (Assign "y" (NatLit 9)))]

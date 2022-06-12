@@ -1,0 +1,4 @@
+Expected: char Actual: int
+Expected: int Actual: char
+Expected: int Actual: char
+Expected: char Actual: int

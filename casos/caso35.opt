@@ -1,0 +1,2 @@
+Program [Decl (VarDef int "x"),Decl (VarDef int "y"),Com (StmtExpr (Assign "x" (Binary Plus (Assign "x" (NatLit 1)) (Assign "y" (NatLit 2))))),Com (If (Binary And (Binary Equ (Var "x") (NatLit 3)) (Binary Equ (Var "y") (NatLit 2))) [PutChar (CharLit 'a')] [PutChar (CharLit 'b')])]
+a

@@ -1,0 +1,2 @@
+Program [Decl (VarDef int "x"),Com (StmtExpr (Assign "x" (NatLit 1))),Com (PutChar (CharLit 'q'))]
+q

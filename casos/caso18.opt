@@ -1,0 +1,2 @@
+Program [Decl (VarDef int "x"),Com (StmtExpr (Assign "x" (NatLit 0))),Com (While (Binary Less (Var "x") (NatLit 10)) [PutChar (CharLit 'x'),StmtExpr (Assign "x" (Binary Plus (Var "x") (NatLit 1)))])]
+xxxxxxxxxx

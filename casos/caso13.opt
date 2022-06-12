@@ -1,0 +1,2 @@
+Program [Decl (VarDef int "x"),Decl (VarDef int "y"),Com (StmtExpr (Assign "x" (NatLit 1))),Com (StmtExpr (Assign "y" (NatLit 0))),Com (If (Binary And (Var "x") (Var "y")) [PutChar (CharLit 'a')] [PutChar (CharLit 'b')])]
+b
