@@ -32,19 +32,32 @@ foldExpr v@(Var name)       = v
 foldExpr c@(CharLit char)   = c
 foldExpr n@(NatLit integer) = n
 foldExpr GetChar            = GetChar
-foldExpr (Unary uOp e)      = Unary uOp (foldExpr e)
+foldExpr (Unary Not e)      = Unary Not (foldExpr e)
+foldExpr (Unary Neg e)      = if isUnaryNeg r then
+                                getNatUnaryNeg r
+                              else
+                                Unary Neg r
+  where r = foldExpr e
 foldExpr (Binary bOp e1 e2) = constFold e1' e2' bOp
   where (e1',e2') = (foldExpr e1, foldExpr e2)
 foldExpr (Assign name e)    = Assign name (foldExpr e)
 
 
 constFold :: Expr -> Expr -> BOp -> Expr
-constFold e1 e2 bOp | isNeutro e1 bOp                          = e2
-                    | isNeutro e2 bOp                          = e1
-                    | isNulo e1 bOp                            = e1
-                    | isNulo e2 bOp                            = e2
-                    | isNat e1 && isNat e2 && isAritmetico bOp = NatLit (operacion e1 e2 bOp)
-                    | otherwise                                = Binary bOp e1 e2
+constFold e1 e2 bOp | isNeutro e1 bOp       = e2
+                    | isNeutro e2 bOp       = e1
+                    | isNulo e1 bOp
+                    && (not . hasEffect) e2 = e1
+                    | isNulo e2 bOp
+                    && (not . hasEffect) e1 = e2
+                    | isNat e1
+                    && isNat e2
+                    && isAritmetico bOp     = if r >= 0 then
+                                                NatLit r
+                                              else
+                                                Unary Neg (NatLit (abs r))
+                    | otherwise             = Binary bOp e1 e2
+  where r = operacion e1 e2 bOp
 
 -- DEAD CODE ELIMINATION
 -- ---------------------
@@ -82,29 +95,43 @@ codeElimBodyStmt (While e b) | isNat e && (not . isTrue) e  = []
 -- -----
 
 isTrue :: Expr -> Bool
-isTrue (NatLit n) = n > 0
-isTrue _          = error "isTrue: La expresión no es de tipo NatLit."
+isTrue (NatLit n)             = n > 0
+isTrue (Unary Neg (NatLit n)) = n > 0
+isTrue _                      = error "isTrue: La expresión no es de tipo NatLit."
 
 isNeutro :: Expr -> BOp -> Bool
-isNeutro (NatLit int) Plus = int == 0
-isNeutro (NatLit int) Mult = int == 1
-isNeutro (NatLit int) And  = int /= 0
-isNeutro (NatLit int) Or   = int == 0
+isNeutro (NatLit int) op = case op of
+                             Plus -> int == 0
+                             Mult -> int == 1
+                             And  -> int /= 0
+                             Or   -> int == 0
+                             _    -> False
 isNeutro _            _    = False
 
 isNulo :: Expr -> BOp -> Bool
-isNulo (NatLit int) Mult = int == 0
-isNulo (NatLit int) And  = int == 0
-isNulo (NatLit int) Or   = int /= 0
+isNulo (NatLit int) op = case op of
+                           Mult -> int == 0
+                           And  -> int == 0
+                           Or   -> int /= 0
+                           _    -> False
 isNulo _            _    = False
 
 isNat :: Expr -> Bool
-isNat (NatLit n) = True
-isNat _          = False
+isNat (NatLit n)             = True
+isNat (Unary Neg (NatLit _)) = True
+isNat _                      = False
 
 getNat :: Expr -> Integer
 getNat (NatLit n) = n
 getNat _          = error "getNat: La expresión no es de tipo NatLit."
+
+getNatUnaryNeg :: Expr -> Expr
+getNatUnaryNeg (Unary Neg n@(NatLit _)) = n
+getNatUnaryNeg _                        = error "getNatUnaryNeg: La expresión no es de tipo Unary Neg NatLit."
+
+isUnaryNeg :: Expr -> Bool
+isUnaryNeg (Unary Neg (NatLit _)) = True
+isUnaryNeg _                      = False
 
 operacion :: Expr -> Expr -> BOp -> Integer
 operacion e1 e2 Plus  = getNat e1 + getNat e2
@@ -123,8 +150,14 @@ isAritmetico op = case op of
                     Mod   -> True
                     _     -> False
 
-getMainBody :: Program -> MainBody
-getMainBody (Program body) = body
+hasEffect :: Expr -> Bool
+hasEffect v@(Var name)       = False
+hasEffect c@(CharLit char)   = False
+hasEffect n@(NatLit integer) = False
+hasEffect GetChar            = True
+hasEffect (Unary _ e)        = hasEffect e
+hasEffect (Binary bOp e1 e2) = hasEffect e1 || hasEffect e2
+hasEffect (Assign name e)    = True
 
 -- Función auxiliar para usar en el REPL
 getProgram :: Either a b -> b
