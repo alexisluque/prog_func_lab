@@ -89,52 +89,42 @@ genExpr (Binary Less e1 e2)  = e2' ++ e1'
                                ++ [ CMP
                                   , PUSH 1
                                   , ADD
-                                  , JMPZ 4
-                                  , STORE "_pop"
+                                  , JMPZ 3 -- JMPZ TRUE
                                   , PUSH 0
-                                  , JUMP 2
+                                  , JUMP 2 -- JUMP END
+                                  -- TRUE:
                                   , PUSH 1
-                                  , SKIP
+                                  -- END:
                                   ]
   where (e1',e2') = (genExpr e1, genExpr e2)
 -- AND
 genExpr (Binary And e1 e2)   = e2' ++ e1'
                                ++ [ PUSH 0
                                   , CMP
-                                  , JMPZ 8       --JUMP X_TRUE. if (x != 0)
-                                  , STORE "_pop" -- Sacar resutado CMP 0 x del stack
+                                  , JMPZ 6 --JUMP TRUE
                                   , PUSH 0
                                   , CMP
-                                  , JMPZ 7       -- JUMP END. if (y != 0)
-                                  , STORE "_pop" -- Sacar resutado CMP 0 y del stack
+                                  , JMPZ 3 -- JUMP END
                                   , PUSH 1
-                                  , JUMP 4       -- JUMP END end if
-                                  -- X_TRUE:
-                                  , STORE "_pop" -- else (x != 0) Sacar 0 del stack (CMP 0 x)
-                                  , STORE "_pop" -- Sacar y del stack
+                                  , JUMP 2 -- JUMP END
+                                  -- TRUE:
                                   , PUSH 0
                                   -- END:
-                                  , SKIP         -- else (y != 0)
                                   ]
   where (e1',e2') = (genExpr e1, genExpr e2)
 -- OR
 genExpr (Binary Or e1 e2)    = e2' ++ e1'
                                ++ [ PUSH 1
                                   , CMP
-                                  , JMPZ 8       -- JMPZ X_FALSE. if (x != 1)
-                                  , STORE "_pop" -- Sacar resutado CMP 1 x del stack
+                                  , JMPZ 6 --JUMP TRUE
                                   , PUSH 1
                                   , CMP
-                                  , JMPZ 4       -- JUMP X_FALSE. if (y != 1)
-                                  , STORE "_pop" -- Sacar resutado CMP 1 y del stack
+                                  , JMPZ 3 -- JUMP END
                                   , PUSH 0
-                                  , JUMP 4       -- JUMP END. end if
-                                    -- X_FALSE:
-                                  , STORE "_pop" -- else. Sacar 0 del stack (CMP 1 x)
-                                  , STORE "_pop" -- Sacar y del stack
+                                  , JUMP 2 -- JUMP END
+                                  -- TRUE:
                                   , PUSH 1
                                   -- END:
-                                  , SKIP
                                   ]
   where (e1',e2') = (genExpr e1, genExpr e2)
 -- ASSIGN
@@ -143,38 +133,6 @@ genExpr (Assign name e)      = e' ++ [STORE name]
 
 -- UTILS
 -- -----
-
-aritmetic :: Expr -> Expr -> Instr -> Code
-aritmetic e1 e2 instr = [getInstr e1, getInstr e2, instr]
-
-getInstr :: Expr -> Instr
-getInstr e | isConst e = PUSH (getConst e)
-           | otherwise = LOAD (getVarName e)
-
-getConst :: Expr -> Integer
-getConst e = case e of
-              (NatLit n)  -> n
-              (CharLit c) -> toInteger $ ord c
-              _           -> error "getConst: La expresión no es NatLit o charLit."
-
-isConst :: Expr -> Bool
-isConst e = case e of
-              (NatLit _)  -> True
-              (CharLit _) -> True
-              _           -> False
-
-getVarName :: Expr -> Name
-getVarName (Var name) = name
-getVarName _          = error "getVarName: La expresión no es Var."
-
-notValue :: Expr -> Integer
-notValue (NatLit n)  = not' n
-notValue (CharLit c) = (not' . toInteger . ord) c
-notValue _           = error "notValue: La expresión no es NatLit o charLit."
-
-not' :: Integer -> Integer
-not' n | n == 0    = 1
-       | otherwise = 0
 
 charLitToInt :: Expr -> Integer
 charLitToInt (CharLit c) = toInteger $ ord c
