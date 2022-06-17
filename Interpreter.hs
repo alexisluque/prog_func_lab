@@ -75,7 +75,10 @@ neg (x:stack, env) = (-x:stack, env)
 neg ([], _)        = error "neg: El stack está vacío."
 
 store :: Conf -> String -> Conf
-store (val:stack, env) name = (stack, (name, val):env)
+-- store (val:stack, env) name = (stack, (name, val):env)
+store (val:stack, env) name = if isNameEnv name env
+                              then (stack, replaceVarEnv name val env)
+                              else (stack, (name, val):env)
 store _                _    = error "store: se rompió el stack :/"
 
 load :: Conf -> String -> Conf
@@ -94,6 +97,15 @@ cmp :: Integer -> Integer -> Integer
 cmp x y | x == y    = 0
         | x > y     = 1
         | otherwise = -1
+
+isNameEnv :: Var -> Env -> Bool
+isNameEnv name env = elem name $ map fst env
+
+replaceVarEnv :: Var -> Integer -> Env -> Env
+replaceVarEnv name v (e@(n, _):env) = if name == n
+                                    then (name, v):replaceVarEnv name v env
+                                    else e:replaceVarEnv name v env
+replaceVarEnv name v [] = []
 
 getValStack :: Conf -> Integer
 getValStack (v:stack, env) = v
