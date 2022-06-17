@@ -7,12 +7,19 @@ compile_and_diff () {
   # Código optimizado
   ./MicroC -o casos/caso${k}.mc < casos/caso${k}.in > casos/salida${k}.opt
 
-  echo "salida${k}.out"
-  diff casos/caso${k}.out casos/salida${k}.out
+  # Diff opt
+  if ! diff casos/caso${k}.opt casos/salida${k}.opt > /dev/null; then
+    echo "salida${k}.opt";
+    diff casos/caso${k}.opt casos/salida${k}.opt
+    echo ""
+  fi
 
-  echo "salida${k}.opt"
-  diff casos/caso${k}.opt casos/salida${k}.opt
-  echo ""
+  # Diff out
+  if ! diff casos/caso${k}.out casos/salida${k}.out > /dev/null; then
+    echo "salida${k}.out"
+    diff casos/caso${k}.out casos/salida${k}.out
+    echo ""
+  fi
 }
 
 for i in {1..40}
