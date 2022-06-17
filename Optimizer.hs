@@ -69,27 +69,33 @@ deadCodeElim (d@(Decl _):statements) = d:deadCodeElim statements
 deadCodeElim ((Com stmt):statements) = codeElimStmt stmt ++ deadCodeElim statements
 
 codeElimStmt :: Stmt -> [CompoundStmt]
-codeElimStmt stmt@(StmtExpr e)                          = [Com stmt]
-codeElimStmt put@(PutChar e)                            = [Com put]
+codeElimStmt stmt@(StmtExpr e)                = [Com stmt]
+codeElimStmt put@(PutChar e)                  = [Com put]
 -- Dead code elimination If
-codeElimStmt (If e b1 b2) | isNat e && isTrue e         = map Com (codeElimBody b1)
-                          | isNat e && (not . isTrue) e = map Com (codeElimBody b2)
-                          | otherwise                   = [Com (If e (codeElimBody b1) (codeElimBody b2))]
+codeElimStmt (If e b1 b2) | isNat e
+                          && isTrue e         = map Com (codeElimBody b1)
+                          | isNat e
+                          && (not . isTrue) e = map Com (codeElimBody b2)
+                          | otherwise         = [Com (If e (codeElimBody b1) (codeElimBody b2))]
 -- Dead code elimination While
-codeElimStmt (While e b) | isNat e && (not . isTrue) e  = []
-                         | otherwise                    = [Com (While e (codeElimBody b))]
+codeElimStmt (While e b) | isNat e
+                         && (not . isTrue) e  = []
+                         | otherwise          = [Com (While e (codeElimBody b))]
 
 codeElimBody :: Body -> Body
 codeElimBody = concatMap codeElimBodyStmt
 
 codeElimBodyStmt :: Stmt -> [Stmt]
-codeElimBodyStmt stmt@(StmtExpr e)                          = [stmt]
-codeElimBodyStmt put@(PutChar e)                            = [put]
-codeElimBodyStmt (If e b1 b2) | isNat e && isTrue e         = codeElimBody b1
-                              | isNat e && (not . isTrue) e = codeElimBody b2
-                              | otherwise                   = [If e (codeElimBody b1) (codeElimBody b2)]
-codeElimBodyStmt (While e b) | isNat e && (not . isTrue) e  = []
-                             | otherwise                    = [While e (codeElimBody b)]
+codeElimBodyStmt stmt@(StmtExpr e)                = [stmt]
+codeElimBodyStmt put@(PutChar e)                  = [put]
+codeElimBodyStmt (If e b1 b2) | isNat e
+                              && isTrue e         = codeElimBody b1
+                              | isNat e
+                              && (not . isTrue) e = codeElimBody b2
+                              | otherwise         = [If e (codeElimBody b1) (codeElimBody b2)]
+codeElimBodyStmt (While e b) | isNat e
+                             && (not . isTrue) e  = []
+                             | otherwise          = [While e (codeElimBody b)]
 
 -- UTILS
 -- -----
