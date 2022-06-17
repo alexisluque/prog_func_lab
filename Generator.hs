@@ -12,7 +12,7 @@ generate :: Program -> Code
 generate (Program body) = genMainBody body
 
 genMainBody :: MainBody -> Code
-genMainBody []                      = [SKIP]
+genMainBody []                      = []
 genMainBody ((Decl _):statements)   = genMainBody statements
 genMainBody ((Com stmt):statements) = assign stmt ++ genMainBody statements
 
