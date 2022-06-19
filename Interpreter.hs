@@ -14,11 +14,11 @@ type Stack = [Integer]
 -- Implementar
 
 -- interp :: Code -> Code -> Conf -> IO Conf
--- interp code [] conf = do print conf
---                          return conf
+-- interp code [] conf                          = do print conf
+--                                                   return conf
 
 interp :: Code -> Code -> Conf -> IO Conf
-interp code [] conf = return conf
+interp code  []                conf          = return conf
 -- PUSH
 interp code' (i@(PUSH n):code) conf          = interp (i:code') code (push conf n)
 -- ADD
@@ -37,8 +37,8 @@ interp code' (i@CMP:code) conf               = interp (i:code') code (bOp conf i
 interp code' (i@(JUMP n):code) conf          = uncurry interp x conf
   where x = jump code' (i:code) $ toInteger n
 -- JUMZ
-interp code' (i@(JMPZ n):code) conf | getValStack conf == 0 = interp (fst c) (snd c) (pop conf)
-                                    | getValStack conf /= 0 = interp (i:code') code (pop conf)
+interp code' (i@(JMPZ n):code) conf | v == 0 = uncurry interp c (pop conf)
+                                    | v /= 0 = interp (i:code') code (pop conf)
   where (c,v) = ( jump code' (i:code) $ toInteger n
                 , getValStack conf
                 )

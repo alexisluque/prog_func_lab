@@ -14,14 +14,10 @@ generate (Program body) = genMainBody body
 genMainBody :: MainBody -> Code
 genMainBody []                      = []
 genMainBody ((Decl _):statements)   = genMainBody statements
-genMainBody ((Com stmt):statements) = assign stmt ++ genMainBody statements
-
-assign :: Stmt -> Code
-assign (StmtExpr (Assign name e)) = genExpr e ++ [STORE name]
-assign stmt                       = genStmt stmt
+genMainBody ((Com stmt):statements) = genStmt stmt ++ genMainBody statements
 
 genStmt :: Stmt -> Code
-genStmt (StmtExpr e) = genExpr e
+genStmt (StmtExpr e) = genExpr e ++ [ JMPZ 1 | needPop e]
 genStmt (If e b1 b2) = genExpr e
                        ++ [ PUSH 0
                           , CMP
@@ -43,8 +39,12 @@ genStmt (While e b)  = e'
                        -- END:
   where (e',b') = (genExpr e, genBody b)
 genStmt (PutChar e)  = if isCharLit e
-                       then [PUSH val, WRITE]
-                       else [LOAD name, WRITE]
+                       then [ PUSH val
+                            , WRITE
+                            ]
+                       else [ LOAD name
+                            , WRITE
+                            ]
   where (val, name) = (charLitToInt e, getVarName e)
 
 genBody :: Body -> Code
@@ -153,13 +153,17 @@ isCharLit :: Expr -> Bool
 isCharLit (CharLit c) = True
 isCharLit _           = False
 
+needPop :: Expr -> Bool
+needPop (Var _)      = True
+needPop (NatLit _)   = True
+needPop GetChar      = True
+needPop Binary {}    = True
+needPop (Assign _ _) = True
+needPop _            = False
+
 getVarName :: Expr -> String
 getVarName (Var name) = name
 getVarName _          = error "getVarName: La expresión no es de tipo Var."
-
-isAssign :: Stmt -> Bool
-isAssign (StmtExpr (Assign _ _)) = True
-isAssign _                       = False
 
 -- Función auxiliar para usar en el REPL
 getProgram :: Either a b -> b
